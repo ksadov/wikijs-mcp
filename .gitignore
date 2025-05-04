@@ -1,0 +1,4 @@
+venv/
+.env
+scrap.txt
+*__pycache__*
