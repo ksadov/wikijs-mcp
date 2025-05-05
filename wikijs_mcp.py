@@ -290,7 +290,7 @@ async def search_wiki(query: str, ctx: Context) -> str:
     Returns:
         A list of pages that match the search query
     """
-    ctx.info(f"Searching Wiki.js for: {query}")
+    await ctx.info(f"Searching Wiki.js for: {query}")
     results = await wiki_client.search_pages(query)
 
     if isinstance(results, str) and results.startswith("Error"):
@@ -324,19 +324,19 @@ async def get_page(identifier: str, ctx: Context, by_path: bool = False) -> str:
         The page content and metadata or an error message if the page is not found
     """
     if by_path:
-        ctx.info(f"Getting page by path: {identifier}")
+        await ctx.info(f"Getting page by path: {identifier}")
         page = await wiki_client.get_page_by_path(identifier)
     else:
         try:
             page_id = int(identifier)
-            ctx.info(f"Getting page by ID: {page_id}")
+            await ctx.info(f"Getting page by ID: {page_id}")
             page = await wiki_client.get_page_by_id(page_id)
         except ValueError:
             return "Error: When by_path is False, identifier must be a numeric ID"
 
     # Debug logging
-    ctx.info(f"Page data type: {type(page)}")
-    ctx.info(f"Page data: {page}")
+    await ctx.info(f"Page data type: {type(page)}")
+    await ctx.info(f"Page data: {page}")
 
     if isinstance(page, str) and page.startswith("Error"):
         return page
@@ -381,11 +381,11 @@ async def update_page(
     except ValueError:
         return "Error: page_id must be a numeric ID"
 
-    ctx.info(f"Updating page with ID: {page_id_int}")
+    await ctx.info(f"Updating page with ID: {page_id_int}")
     if description:
-        ctx.info("Updating both content and description")
+        await ctx.info("Updating both content and description")
     else:
-        ctx.info("Updating content only")
+        await ctx.info("Updating content only")
 
     result = await wiki_client.update_page(page_id_int, content, description)
     return result
