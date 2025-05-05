@@ -99,10 +99,24 @@ class WikiJsClient:
                 return f"Error: {response.status_code} - {response.text}"
 
             data = response.json()
+
+            # Check for GraphQL errors
             if "errors" in data:
+                # If the error is about a non-existent page, return None
+                for error in data["errors"]:
+                    if (
+                        error.get("extensions", {}).get("exception", {}).get("code")
+                        == 6003
+                    ):
+                        return None
                 return f"GraphQL Error: {data['errors']}"
 
-            return data["data"]["pages"]["single"]
+            # Check if the page exists in the response
+            page_data = data.get("data", {}).get("pages", {}).get("single")
+            if page_data is None:
+                return None
+
+            return page_data
 
     async def get_page_by_path(self, path):
         """Get page content by path"""
@@ -133,10 +147,24 @@ class WikiJsClient:
                 return f"Error: {response.status_code} - {response.text}"
 
             data = response.json()
+
+            # Check for GraphQL errors
             if "errors" in data:
+                # If the error is about a non-existent page, return None
+                for error in data["errors"]:
+                    if (
+                        error.get("extensions", {}).get("exception", {}).get("code")
+                        == 6003
+                    ):
+                        return None
                 return f"GraphQL Error: {data['errors']}"
 
-            return data["data"]["pages"]["singleByPath"]
+            # Check if the page exists in the response
+            page_data = data.get("data", {}).get("pages", {}).get("singleByPath")
+            if page_data is None:
+                return None
+
+            return page_data
 
     async def update_page(self, page_id, content, description=None):
         """Update page content and optionally description"""
@@ -291,7 +319,7 @@ async def get_page(identifier: str, ctx: Context, by_path: bool = False) -> str:
         by_path: If True, look up by path instead of ID
 
     Returns:
-        The page content and metadata
+        The page content and metadata or an error message if the page is not found
     """
     if by_path:
         ctx.info(f"Getting page by path: {identifier}")
@@ -304,22 +332,30 @@ async def get_page(identifier: str, ctx: Context, by_path: bool = False) -> str:
         except ValueError:
             return "Error: When by_path is False, identifier must be a numeric ID"
 
+    # Debug logging
+    ctx.info(f"Page data type: {type(page)}")
+    ctx.info(f"Page data: {page}")
+
     if isinstance(page, str) and page.startswith("Error"):
         return page
 
-    if not page:
+    if not page or page is None:
         return f"No page found with {'path' if by_path else 'ID'}: {identifier}"
+
+    # Ensure page is a dictionary before accessing its keys
+    if not isinstance(page, dict):
+        return f"Unexpected response format: {page}"
 
     # Format the page data
     return f"""
-Title: {page['title']}
-Path: {page['path']}
-ID: {page['id']}
-Last Updated: {page['updatedAt']}
+Title: {page.get('title', 'No title')}
+Path: {page.get('path', 'No path')}
+ID: {page.get('id', 'No ID')}
+Last Updated: {page.get('updatedAt', 'No update time')}
 Description: {page.get('description', 'No description')}
 
 Content:
-{page['content']}
+{page.get('content', 'No content')}
 """
 
 
