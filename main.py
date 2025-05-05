@@ -172,6 +172,8 @@ class WikiJsClient:
         page = await self.get_page_by_id(page_id)
         if isinstance(page, str) and page.startswith("Error"):
             return page
+        if page is None:
+            return f"Error: No page found with ID: {page_id}"
 
         # Prepare the update mutation with all required fields
         variables = {
