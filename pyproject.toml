@@ -1,0 +1,18 @@
+[project]
+name = "wikijs-mcp"
+version = "0.1.0"
+description = "A simple MCP server for Wiki.js"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "httpx>=0.28.1",
+    "mcp[cli]>=1.2.0",
+    "python-dotenv>=1.0.1",
+]
+
+[build-system]
+requires = [ "hatchling",]
+build-backend = "hatchling.build"
+
+[project.scripts]
+wikijs = "wikijs:main"

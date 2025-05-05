@@ -11,7 +11,7 @@ async def run_tests(
 ):
     """Run tests against the Wiki.js MCP server"""
     # Create server parameters for stdio connection
-    server_params = StdioServerParameters(command="python", args=["main.py"])
+    server_params = StdioServerParameters(command="python", args=["wikijs_mcp.py"])
 
     # Connect to the MCP server
     async with stdio_client(server_params) as (read_stream, write_stream):
