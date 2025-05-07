@@ -7,7 +7,13 @@ from mcp.client.stdio import stdio_client
 
 
 async def run_tests(
-    query, action, page_id=None, page_path=None, content=None, description=None
+    query,
+    action,
+    page_id=None,
+    page_path=None,
+    content=None,
+    description=None,
+    title=None,
 ):
     """Run tests against the Wiki.js MCP server"""
     # Create server parameters for stdio connection
@@ -77,6 +83,30 @@ async def run_tests(
                 print("\nUpdate Result:")
                 print(result.content[0].text)
 
+            elif action == "create":
+                if not title or not content or not page_path:
+                    print(
+                        "Error: title, content, and page_path must be provided for 'create' action"
+                    )
+                    return
+
+                # Test page creation
+                print(f"Creating new page with title: {title} at path: {page_path}")
+                arguments = {"title": title, "content": content, "path": page_path}
+                if description:
+                    arguments["description"] = description
+
+                try:
+                    result = await session.call_tool("create_page", arguments=arguments)
+                    print("\nCreate Result:")
+                    if hasattr(result, "content") and result.content:
+                        print(result.content[0].text)
+                    else:
+                        print("No response content received")
+                except Exception as e:
+                    print(f"\nError during page creation: {str(e)}")
+                    return
+
             else:
                 print(f"Unknown action: {action}")
                 return
@@ -85,15 +115,20 @@ async def run_tests(
 def main():
     parser = argparse.ArgumentParser(description="Test the Wiki.js MCP server")
     parser.add_argument(
-        "action", choices=["search", "get", "update"], help="Action to perform"
+        "action",
+        choices=["search", "get", "update", "create"],
+        help="Action to perform",
     )
     parser.add_argument("--query", "-q", help="Search query")
     parser.add_argument("--page-id", "-i", help="Page ID for get/update operations")
-    parser.add_argument("--page-path", "-p", help="Page path for get operation")
-    parser.add_argument("--content", "-c", help="New content for update operation")
+    parser.add_argument("--page-path", "-p", help="Page path for get/create operations")
     parser.add_argument(
-        "--description", "-d", help="New description for update operation"
+        "--content", "-c", help="New content for update/create operations"
     )
+    parser.add_argument(
+        "--description", "-d", help="New description for update/create operations"
+    )
+    parser.add_argument("--title", "-t", help="Page title for create operation")
 
     args = parser.parse_args()
 
@@ -107,6 +142,13 @@ def main():
     if args.action == "update" and (not args.page_id or not args.content):
         parser.error("update action requires --page-id and --content arguments")
 
+    if args.action == "create" and (
+        not args.title or not args.content or not args.page_path
+    ):
+        parser.error(
+            "create action requires --title, --content, and --page-path arguments"
+        )
+
     # Run the tests
     asyncio.run(
         run_tests(
@@ -116,6 +158,7 @@ def main():
             page_path=args.page_path,
             content=args.content,
             description=args.description,
+            title=args.title,
         )
     )
 

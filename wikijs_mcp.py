@@ -166,6 +166,124 @@ class WikiJsClient:
 
             return page_data
 
+    async def create_page(self, title, content, path, description=""):
+        """Create a new page in Wiki.js"""
+        variables = {
+            "title": title,
+            "content": content,
+            "description": description,  # Now required, default to empty string
+            "editor": "markdown",
+            "locale": "en",
+            "isPrivate": False,
+            "isPublished": True,
+            "path": path,
+            "tags": [],
+            "scriptCss": "",
+            "scriptJs": "",
+            "publishStartDate": None,
+            "publishEndDate": None,
+        }
+
+        logger.info(f"Creating page with variables: {variables}")
+
+        async with httpx.AsyncClient() as client:
+            try:
+                response = await client.post(
+                    f"{self.url}/graphql",
+                    headers=self.headers,
+                    json={
+                        "query": """
+                        mutation (
+                            $title: String!
+                            $content: String!
+                            $description: String!
+                            $editor: String!
+                            $locale: String!
+                            $isPrivate: Boolean!
+                            $isPublished: Boolean!
+                            $path: String!
+                            $tags: [String]!
+                            $scriptCss: String
+                            $scriptJs: String
+                            $publishStartDate: Date
+                            $publishEndDate: Date
+                        ) {
+                            pages {
+                                create(
+                                    title: $title
+                                    content: $content
+                                    description: $description
+                                    editor: $editor
+                                    locale: $locale
+                                    isPrivate: $isPrivate
+                                    isPublished: $isPublished
+                                    path: $path
+                                    tags: $tags
+                                    scriptCss: $scriptCss
+                                    scriptJs: $scriptJs
+                                    publishStartDate: $publishStartDate
+                                    publishEndDate: $publishEndDate
+                                ) {
+                                    responseResult {
+                                        succeeded
+                                        slug
+                                        message
+                                    }
+                                    page {
+                                        id
+                                        title
+                                        content
+                                        description
+                                        path
+                                    }
+                                }
+                            }
+                        }
+                        """,
+                        "variables": variables,
+                    },
+                )
+
+                if response.status_code != 200:
+                    error_msg = f"HTTP Error: {response.status_code} - {response.text}"
+                    logger.error(error_msg)
+                    return error_msg
+
+                data = response.json()
+                logger.info(f"API Response: {data}")
+
+                if "errors" in data:
+                    error_msg = f"GraphQL Error: {data['errors']}"
+                    logger.error(error_msg)
+                    return error_msg
+
+                if (
+                    "data" not in data
+                    or "pages" not in data["data"]
+                    or "create" not in data["data"]["pages"]
+                ):
+                    error_msg = f"Unexpected response structure: {data}"
+                    logger.error(error_msg)
+                    return error_msg
+
+                result = data["data"]["pages"]["create"]["responseResult"]
+                if result["succeeded"]:
+                    page_data = data["data"]["pages"]["create"]["page"]
+                    success_msg = (
+                        f"Page created successfully with ID: {page_data['id']}"
+                    )
+                    logger.info(success_msg)
+                    return success_msg
+                else:
+                    error_msg = f"Failed to create page: {result['message']}"
+                    logger.error(error_msg)
+                    return error_msg
+
+            except Exception as e:
+                error_msg = f"Exception during page creation: {str(e)}"
+                logger.error(error_msg)
+                return error_msg
+
     async def update_page(self, page_id, content, description=None):
         """Update page content and optionally description"""
         # First get the current page to preserve other fields
@@ -388,6 +506,29 @@ async def update_page(
         await ctx.info("Updating content only")
 
     result = await wiki_client.update_page(page_id_int, content, description)
+    return result
+
+
+@mcp.tool()
+async def create_page(
+    title: str, content: str, path: str, ctx: Context, description: str = ""
+) -> str:
+    """
+    Create a new page in Wiki.js
+
+    Args:
+        title: The title of the new page
+        content: The content of the new page
+        path: The path where the page should be created (e.g., '/my-page')
+        description: Description of the page contents (required, defaults to empty string)
+
+    Returns:
+        A status message indicating success or failure, including the new page ID if successful
+    """
+    await ctx.info(f"Creating new page with title: {title} at path: {path}")
+    await ctx.info(f"Description: {description}")
+
+    result = await wiki_client.create_page(title, content, path, description)
     return result
 
 
