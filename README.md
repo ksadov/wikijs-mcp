@@ -5,5 +5,5 @@ A simple MCP server for interfacing with running [Wiki.js](https://js.wiki/) ins
 ## Features
 - Keyword search
 - Retrieving pages by id or path
-- Editing page content and description
+- Editing page content
 - New page creation

@@ -12,7 +12,6 @@ async def run_tests(
     page_id=None,
     page_path=None,
     content=None,
-    description=None,
     title=None,
 ):
     """Run tests against the Wiki.js MCP server"""
@@ -76,8 +75,6 @@ async def run_tests(
                 # Test page update
                 print(f"Updating page with ID: {page_id}")
                 arguments = {"page_id": page_id, "content": content}
-                if description:
-                    arguments["description"] = description
 
                 result = await session.call_tool("update_page", arguments=arguments)
                 print("\nUpdate Result:")
@@ -93,8 +90,6 @@ async def run_tests(
                 # Test page creation
                 print(f"Creating new page with title: {title} at path: {page_path}")
                 arguments = {"title": title, "content": content, "path": page_path}
-                if description:
-                    arguments["description"] = description
 
                 try:
                     result = await session.call_tool("create_page", arguments=arguments)
@@ -125,9 +120,6 @@ def main():
     parser.add_argument(
         "--content", "-c", help="New content for update/create operations"
     )
-    parser.add_argument(
-        "--description", "-d", help="New description for update/create operations"
-    )
     parser.add_argument("--title", "-t", help="Page title for create operation")
 
     args = parser.parse_args()
@@ -157,7 +149,6 @@ def main():
             page_id=args.page_id,
             page_path=args.page_path,
             content=args.content,
-            description=args.description,
             title=args.title,
         )
     )

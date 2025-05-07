@@ -284,8 +284,8 @@ class WikiJsClient:
                 logger.error(error_msg)
                 return error_msg
 
-    async def update_page(self, page_id, content, description=None):
-        """Update page content and optionally description"""
+    async def update_page(self, page_id, content):
+        """Update page content"""
         # First get the current page to preserve other fields
         page = await self.get_page_by_id(page_id)
         if isinstance(page, str) and page.startswith("Error"):
@@ -298,9 +298,7 @@ class WikiJsClient:
             "id": int(page_id),
             "title": page.get("title", ""),  # Preserve existing title
             "content": content,
-            "description": (
-                description if description is not None else page.get("description", "")
-            ),
+            "description": page.get("description", ""),  # Preserve existing description
             "editor": "markdown",
             "locale": "en",
             "isPrivate": False,
@@ -480,16 +478,13 @@ Content:
 
 
 @mcp.tool()
-async def update_page(
-    page_id: str, content: str, ctx: Context, description: str = None
-) -> str:
+async def update_page(page_id: str, content: str, ctx: Context) -> str:
     """
-    Update a Wiki.js page's content and optionally its description
+    Update a Wiki.js page's content
 
     Args:
         page_id: The ID of the page to update
         content: The new content for the page
-        description: Optional new description of page contents. If not provided, the existing description will be used.
 
     Returns:
         A status message indicating success or failure
@@ -500,12 +495,9 @@ async def update_page(
         return "Error: page_id must be a numeric ID"
 
     await ctx.info(f"Updating page with ID: {page_id_int}")
-    if description:
-        await ctx.info("Updating both content and description")
-    else:
-        await ctx.info("Updating content only")
+    await ctx.info("Updating content")
 
-    result = await wiki_client.update_page(page_id_int, content, description)
+    result = await wiki_client.update_page(page_id_int, content)
     return result
 
 
