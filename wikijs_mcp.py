@@ -317,8 +317,8 @@ async def get_page(identifier: str, ctx: Context, by_path: bool = False) -> str:
     Get page content and metadata from Wiki.js
 
     Args:
-        identifier: Either the page ID (number) or the page path (string)
-        by_path: If True, look up by path instead of ID
+        identifier: Either the page ID (number) or the relative page path (string, i.e /people/Zef)
+        by_path: If True, look up by path instead of page ID number. False by default.
 
     Returns:
         The page content and metadata or an error message if the page is not found
@@ -371,7 +371,7 @@ async def update_page(
     Args:
         page_id: The ID of the page to update
         content: The new content for the page
-        description: Optional new description for the page
+        description: Optional new description of page contents. If not provided, the existing description will be used.
 
     Returns:
         A status message indicating success or failure
