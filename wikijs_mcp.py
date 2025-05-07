@@ -482,6 +482,12 @@ async def update_page(page_id: str, content: str, ctx: Context) -> str:
     """
     Update a Wiki.js page's content
 
+    Note that
+        - page_id is the numeric ID of the page
+        - content totally replaces the existing content of the page. You may want to
+        get the existing content first to make sure that you're not overwriting anything
+        important.
+
     Args:
         page_id: The ID of the page to update
         content: The new content for the page
